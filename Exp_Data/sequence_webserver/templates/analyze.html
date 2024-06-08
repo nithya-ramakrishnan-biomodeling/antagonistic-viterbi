@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analysis Result</title>
+    <!-- Link to CSS -->
+</head>
+<body>
+    <h1>We are now analyzing the Sequence</h1>
+    <p>Details File: {{ filename }}</p>
+    <p>Chromosome: {{ chromosome }}</p>
+    <p>Window: {{ window }}</p>
+    <p>Threshold: {{ threshold }}</p>
+    <h2>Sequence Details</h2>
+    <p>Sequence Number: {{ sequence_data.Sequence_number }}</p>
+    <p>Start BP: {{ sequence_data.Start_BP }}</p>
+    <p>End BP: {{ sequence_data.End_BP }}</p>
+    <p>Alpha: {{ sequence_data.Alpha }}</p>
+    <p>Beta: {{ sequence_data.Beta }}</p>
+    <p>Mu: {{ sequence_data.Mu }}</p>
+    <p>Invalid: {{ sequence_data.Invalid }}</p>
+
+    <!-- iframes for plots -->
+
+    <h2>Plot Analysis</h2>
+    <button onclick="window.open('{{ url_for('serve_plot', chromosome=chromosome, window=window, threshold=threshold, sequence_number=sequence_data.Sequence_number, decode_type='anta_k_fill') }}', '_blank')">(Antagonism) K-Fill Plot</button>
+    <button onclick="window.open('{{ url_for('serve_plot', chromosome=chromosome, window=window, threshold=threshold, sequence_number=sequence_data.Sequence_number, decode_type='anta_k_patch') }}', '_blank')">(Antagonism) K-Patch Plot</button>
+    <button onclick="window.open('{{ url_for('serve_plot', chromosome=chromosome, window=window, threshold=threshold, sequence_number=sequence_data.Sequence_number, decode_type='viterbi') }}', '_blank')">Viterbi Plot</button>
+    <button onclick="window.open('{{ url_for('serve_plot', chromosome=chromosome, window=window, threshold=threshold, sequence_number=sequence_data.Sequence_number, decode_type='no_anta') }}', '_blank')">No Anta Plot</button>
+    <button onclick="window.open('{{ url_for('serve_plot', chromosome=chromosome, window=window, threshold=threshold, sequence_number=sequence_data.Sequence_number, decode_type='nn') }}', '_blank')">NN Plot</button>
+
+    <h2>K-Value Analysis</h2>
+    <p>K Value - No Antagonism: {{ k_no_antagonism }}</p>
+    <p>K Value - Antagonism: {{ k_antagonism }}</p>
+
+    <h2>Average Bit Error Rates</h2>
+    {% for decode_type, avg_bit_error in avg_bit_errors.items() %}
+        <p>{{ decode_type.replace('_', ' ').title() }} Average Bit Error Rate: {{ avg_bit_error }}</p>
+    {% endfor %}
+
+    <h2>Bit Error Rate Comparison with No Antagonism (Method - No_Antagonism)</h2>
+    {% for decode_type, delta in bit_error_deltas.items() %}
+        <p>{{ decode_type.replace('_', ' ').title() }} Delta: {{ delta }}</p>
+    {% endfor %}
+</body>
+</html>

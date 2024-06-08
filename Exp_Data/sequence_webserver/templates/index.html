@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chromosome Data Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        function populateSequenceNumber(sequenceNumber) {
+            document.getElementById('sequence_number').value = sequenceNumber;
+        }
+
+        function confirmAnalyzeAll() {
+            var startIndex = document.getElementById('start_index').value;
+            var endIndex = document.getElementById('end_index').value;
+
+            // Generate a dynamic confirmation message
+            var confirmationMessage = "You are about to analyze sequences from index " + startIndex + " to " + endIndex + ". " +
+                                      "This can take a significant amount of time. Do you want to continue?";
+
+            // Display the confirmation dialog
+            return confirm(confirmationMessage);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Attach the confirmAnalyzeAll function to the form's onsubmit event
+            var analyzeAllForm = document.querySelector('form[action="/analyze_all"]');
+            analyzeAllForm.onsubmit = confirmAnalyzeAll;
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-section">
+            <h1>Data Selection</h1>
+            <form action="/" method="post">
+                <!-- Chromosome Selection -->
+                <label for="chromosome">Choose a Chromosome:</label>
+                <select name="chromosome" id="chromosome">
+                    {% for chr in chromosomes %}
+                    <option value="{{ chr }}" {% if request.form.chromosome == chr %} selected {% endif %}>{{ chr }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Window Selection -->
+                <label for="window">Window:</label>
+                <select name="window" id="window">
+                    {% for window in windows %}
+                    <option value="{{ window }}" {% if request.form.window == window %} selected {% endif %}>{{ window }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Threshold Selection -->
+                <label for="threshold">Threshold:</label>
+                <select name="threshold" id="threshold">
+                    {% for threshold in thresholds %}
+                    <option value="{{ threshold }}" {% if request.form.threshold == threshold %} selected {% endif %}>{{ threshold }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Filters -->
+                <h2>Filters</h2>
+
+                <!-- Alpha Filter -->
+                <div class="filter">
+                    <label>Alpha:</label>
+                    <div class="filter-inputs">
+                        Min: <input type="number" name="alpha_min" step="0.01" min="0" max="1" value="{{ request.form.alpha_min if request.form.alpha_min else '0' }}">
+                        Max: <input type="number" name="alpha_max" step="0.01" min="0" max="1" value="{{ request.form.alpha_max if request.form.alpha_max else '1' }}">
+                    </div>
+                </div>
+
+                <!-- Beta Filter -->
+                <div class="filter">
+                    <label>Beta:</label>
+                    <div class="filter-inputs">
+                        Min: <input type="number" name="beta_min" step="0.01" min="0" max="1" value="{{ request.form.beta_min if request.form.beta_min else '0' }}">
+                        Max: <input type="number" name="beta_max" step="0.01" min="0" max="1" value="{{ request.form.beta_max if request.form.beta_max else '1' }}">
+                    </div>
+                </div>
+
+                <!-- Mu Filter -->
+                <div class="filter">
+                    <label>Mu:</label>
+                    <div class="filter-inputs">
+                        Min: <input type="number" name="mu_min" step="0.01" min="0" max="1" value="{{ request.form.mu_min if request.form.mu_min else '0' }}">
+                        Max: <input type="number" name="mu_max" step="0.01" min="0" max="1" value="{{ request.form.mu_max if request.form.mu_max else '1' }}">
+                    </div>
+                </div>
+
+                <!-- Invalid Filter -->
+                <div class="filter">
+                    <label>Invalid:</label>
+                    <div class="filter-inputs">
+                        Min: <input type="number" name="invalid_min" step="1" min="0" max="100" value="{{ request.form.invalid_min if request.form.invalid_min else '0' }}">
+                        Max: <input type="number" name="invalid_max" step="1" min="0" max="100" value="{{ request.form.invalid_max if request.form.invalid_max else '100' }}">
+                    </div>
+                </div>
+
+
+
+
+                <!-- Apply Filters Button -->
+                <div class="filter-actions">
+                    <input type="submit" value="Apply Filters">
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="pagination-controls">
+                    <input type="hidden" name="current_page" value="{{ current_page }}">
+                    <button type="submit" name="change_page" value="prev">Previous</button>
+                    <button type="submit" name="change_page" value="next">Next</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Analyze Panel -->
+        <div class="analyze-section">
+            <h2>Analyze Sequence</h2>
+            <form action="/analyze" method="post" target="_blank">
+                <input type="hidden" name="chromosome" value="{{ request.form.chromosome }}">
+                <input type="hidden" name="window" value="{{ request.form.window }}">
+                <input type="hidden" name="threshold" value="{{ request.form.threshold }}">
+                <label for="sequence_number">Sequence Number:</label>
+                <input type="number" name="sequence_number" id="sequence_number" required>
+                <input type="submit" value="Analyze">
+            </form>
+
+            <!-- Analyze All Sequences Form -->
+            <h2>Analyze Batch</h2>
+            <form action="/analyze_all" method="post" target="_blank">
+                <input type="hidden" name="chromosome" value="{{ request.form.get('chromosome', '') }}">
+                <input type="hidden" name="window" value="{{ request.form.get('window', '') }}">
+                <input type="hidden" name="threshold" value="{{ request.form.get('threshold', '') }}">
+                <input type="hidden" name="alpha_min" value="{{ request.form.get('alpha_min', '0') }}">
+                <input type="hidden" name="alpha_max" value="{{ request.form.get('alpha_max', '1') }}">
+                <input type="hidden" name="beta_min" value="{{ request.form.get('beta_min', '0') }}">
+                <input type="hidden" name="beta_max" value="{{ request.form.get('beta_max', '1') }}">
+                <input type="hidden" name="mu_min" value="{{ request.form.get('mu_min', '0') }}">
+                <input type="hidden" name="mu_max" value="{{ request.form.get('mu_max', '1') }}">
+                <input type="hidden" name="invalid_min" value="{{ request.form.get('invalid_min', '0') }}">
+                <input type="hidden" name="invalid_max" value="{{ request.form.get('invalid_max', '100') }}">
+
+                    <!-- Start Index Input -->
+                <label for="start_index">Start Index:</label>
+                <input type="number" name="start_index" id="start_index" min="1" value="1" required>
+
+                <!-- End Index Input -->
+                <label for="end_index">End Index:</label>
+                <input type="number" name="end_index" id="end_index" min="2" value="9999" required>
+
+
+                <input type="submit" value="Analyze All" id="analyze-all-btn">
+            </form>
+        <!-- Analyze All Chromosomes Form -->
+        <h2>Analyze All Chromosomes</h2>
+        <form action="/analyze_all_chr" method="post" target="_blank">
+            <input type="hidden" name="window" value="{{ request.form.get('window', '') }}">
+            <input type="hidden" name="threshold" value="{{ request.form.get('threshold', '') }}">
+            <input type="hidden" name="alpha_min" value="{{ request.form.get('alpha_min', '0') }}">
+            <input type="hidden" name="alpha_max" value="{{ request.form.get('alpha_max', '1') }}">
+            <input type="hidden" name="beta_min" value="{{ request.form.get('beta_min', '0') }}">
+            <input type="hidden" name="beta_max" value="{{ request.form.get('beta_max', '1') }}">
+            <input type="hidden" name="mu_min" value="{{ request.form.get('mu_min', '0') }}">
+            <input type="hidden" name="mu_max" value="{{ request.form.get('mu_max', '1') }}">
+            <input type="hidden" name="invalid_min" value="{{ request.form.get('invalid_min', '0') }}">
+            <input type="hidden" name="invalid_max" value="{{ request.form.get('invalid_max', '100') }}">
+            <input type="submit" value="Analyze All Chromosomes" id="analyze-all-chr-btn">
+        </form>
+        </div>
+
+        <div class="table-section">
+            <!-- Display Table -->
+            {% if data is not none %}
+            <h2>Displaying Sequences</h2>
+            <p>Showing sequences from {{ (current_page - 1) * rows_per_page + 1 }} to {{ current_page * rows_per_page }} out of {{ total }}.</p>
+            <table>
+                <tr>
+                    <th>Index</th>
+                    <th>Sequence Number</th>
+                    <th>Start BP</th>
+                    <th>End BP</th>
+                    <th>Alpha</th>
+                    <th>Beta</th>
+                    <th>Mu</th>
+                    <th>Invalid</th>
+                </tr>
+                {% for row in data.itertuples() %}
+                <tr onclick="populateSequenceNumber({{ row.Sequence_number }})">
+                    <td>{{ loop.index + (current_page - 1) * rows_per_page}}</td>
+                    <td>{{ row.Sequence_number }}</td>
+                    <td>{{ row.Start_BP }}</td>
+                    <td>{{ row.End_BP }}</td>
+                    <td>{{ row.Alpha }}</td>
+                    <td>{{ row.Beta }}</td>
+                    <td>{{ row.Mu }}</td>
+                    <td>{{ row.Invalid }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p>No data to display. Please select options and apply filters.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- JavaScript for pagination -->
+
+    <script>
+        // JavaScript to handle Previous/Next page buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentPage = {{ current_page }};
+            var totalRows = {{ total }};
+            var rowsPerPage = {{ rows_per_page }};
+
+            var prevButton = document.querySelector('button[name="change_page"][value="prev"]');
+            var nextButton = document.querySelector('button[name="change_page"][value="next"]');
+
+            if (currentPage <= 1) {
+                prevButton.disabled = true;
+            }
+            if (currentPage >= Math.ceil(totalRows / rowsPerPage)) {
+                nextButton.disabled = true;
+            }
+
+            prevButton.addEventListener('click', function() {
+                document.querySelector('input[name="current_page"]').value = currentPage - 1;
+            });
+
+            nextButton.addEventListener('click', function() {
+                document.querySelector('input[name="current_page"]').value = currentPage + 1;
+            });
+        });
+</script>
+
+</body>
+</html>
